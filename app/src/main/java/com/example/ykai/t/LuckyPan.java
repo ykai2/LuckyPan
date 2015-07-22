@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -53,7 +54,7 @@ public class LuckyPan extends SurfaceView implements SurfaceHolder.Callback,Runn
 
     private int mPadding;
     private Bitmap mBgBitmap= BitmapFactory.decodeResource(getResources(),R.drawable.bg2);
-    private float mTextSize= TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SHIFT,20,getResources().getDisplayMetrics());
+    private float mTextSize= TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP,17,getResources().getDisplayMetrics());
 
 
 
@@ -81,8 +82,8 @@ public class LuckyPan extends SurfaceView implements SurfaceHolder.Callback,Runn
         mPadding=getPaddingLeft();
 
         mRadius=width-mPadding*2;
-        mCenter=mRadius/2;
-        setMeasuredDimension(width,width);
+        mCenter=width/2;
+        setMeasuredDimension(width, width);
     }
 
     @Override
@@ -123,7 +124,18 @@ public class LuckyPan extends SurfaceView implements SurfaceHolder.Callback,Runn
     @Override
     public void run() {
         while (isRunning){
+            long start =System.currentTimeMillis();
             draw();
+            long end=System.currentTimeMillis();
+            if(end-start<50){
+                try{
+                    Thread.sleep(50-(end-start));
+                }
+                catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+
+            }
         }
         
 
@@ -134,6 +146,17 @@ public class LuckyPan extends SurfaceView implements SurfaceHolder.Callback,Runn
             mCanvas=mHolder.lockCanvas();
             if(mCanvas!=null)
             {
+                drawBg();
+                float tmpAngle=mStartAngle;
+                float sweepAngle=360/mItemCount;
+                for(int i=0;i<mItemCount;i++){
+                    mArcPaint.setColor(mColor[i]);
+
+                    mCanvas.drawArc(mRange, tmpAngle, sweepAngle, true, mArcPaint);
+                    drawText(tmpAngle, sweepAngle, mStrs[i]);
+                    drawIcon(tmpAngle,mImgsBitmap[i]);
+                    tmpAngle+=sweepAngle;
+                }
 
             }
 
@@ -147,5 +170,31 @@ public class LuckyPan extends SurfaceView implements SurfaceHolder.Callback,Runn
             }
         }
 
+    }
+
+    private void drawIcon(float tmpAngle, Bitmap bitmap) {
+        int imgWidth=mRadius/8;
+        float angle=(float)((tmpAngle+360/mItemCount/2)*Math.PI/180);
+        int x=(int)(mCenter+mRadius/2/2*Math.cos(angle));
+        int y=(int)(mCenter+mRadius/2/2*Math.sin(angle));
+
+        RectF rectF=new RectF(x-imgWidth/2,y-imgWidth/2,x+imgWidth/2,y+imgWidth/2);
+        mCanvas.drawBitmap(bitmap,null,rectF,null);
+
+    }
+
+    private void drawText(float tmpAngle, float sweepAngle, String mStr) {
+
+        Path path=new Path();
+        path.addArc(mRange,tmpAngle,sweepAngle);
+        float textWidth=mTextPaint.measureText(mStr);
+        int hOffset=(int)(mRadius*Math.PI/mItemCount/2-textWidth/2);
+        int vOffset=mRadius/2/6;
+        mCanvas.drawTextOnPath(mStr,path, hOffset,vOffset,mTextPaint);
+    }
+
+    private void drawBg() {
+        mCanvas.drawColor(0xffffff);
+        mCanvas.drawBitmap(mBgBitmap,null,new RectF(mPadding/2,mPadding/2,getMeasuredWidth()-mPadding/2,getMeasuredHeight()-mPadding/2),null);
     }
 }

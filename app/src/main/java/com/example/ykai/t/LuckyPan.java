@@ -44,7 +44,7 @@ public class LuckyPan extends SurfaceView implements SurfaceHolder.Callback,Runn
     private Paint mArcPaint;
     private Paint mTextPaint;
 
-    private double mSpeed;
+    private double mSpeed=0;
 
     private volatile int mStartAngle=0;
 
@@ -127,9 +127,9 @@ public class LuckyPan extends SurfaceView implements SurfaceHolder.Callback,Runn
             long start =System.currentTimeMillis();
             draw();
             long end=System.currentTimeMillis();
-            if(end-start<50){
+            if(end-start<30){
                 try{
-                    Thread.sleep(50-(end-start));
+                    Thread.sleep(30-(end-start));
                 }
                 catch (InterruptedException e){
                     e.printStackTrace();
@@ -157,6 +157,16 @@ public class LuckyPan extends SurfaceView implements SurfaceHolder.Callback,Runn
                     drawIcon(tmpAngle,mImgsBitmap[i]);
                     tmpAngle+=sweepAngle;
                 }
+                mStartAngle+=mSpeed;
+
+                if(isShouldEnd){
+                    mSpeed-=1;
+
+                }
+                if(mSpeed<=0){
+                    mSpeed=0;
+                    isShouldEnd=false;
+                }
 
             }
 
@@ -170,6 +180,20 @@ public class LuckyPan extends SurfaceView implements SurfaceHolder.Callback,Runn
             }
         }
 
+    }
+
+    public void luckyStart(){
+        mSpeed=50;
+        isShouldEnd=false;
+    }
+    public void lucksEnd(){
+        isShouldEnd=true;
+    }
+    public boolean isStart(){
+        return mSpeed!=0;
+    }
+    public boolean isShouldEnd(){
+        return isShouldEnd;
     }
 
     private void drawIcon(float tmpAngle, Bitmap bitmap) {
